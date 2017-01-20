@@ -1,0 +1,3 @@
+*.sublime-*
+lib/
+node_modules/
