@@ -1,0 +1,37 @@
+{
+  "name": "profuse",
+  "version": "1.0.0",
+  "description": "promise-based circuit breaker",
+  "keywords": [
+    "circuit-breaker"
+  ],
+  "author": "Robey Pointer <robeypointer@gmail.com>",
+  "homepage": "https://github.com/robey/profuse",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/robey/profuse.git"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/mocha": "^2.2.38",
+    "@types/node": "^7.0.0",
+    "@types/should": "^8.1.30",
+    "mocha": "^3.2.0",
+    "should": "^11.1.2",
+    "source-map-support": "^0.4.10",
+    "typescript": "^2.1.5"
+  },
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf lib",
+    "distclean": "npm run clean && rm -rf node_modules npm-debug.log",
+    "prepublish": "npm run build",
+    "test": "npm run build && mocha -R spec --colors lib/test"
+  }
+}
