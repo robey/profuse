@@ -68,20 +68,20 @@ describe("CircuitBreaker", () => {
     }
   });
 
-  it("trips with too many concurrent requests", () => {
+  it("trips with too many concurrent requests", async () => {
     const breaker = new CircuitBreaker("test", { maxConcurrent: 3 });
-    Promise.all([
+    await Promise.all([
       breaker.do(() => delay(50)),
       breaker.do(() => delay(50)),
       breaker.do(() => delay(50)),
       breaker.do(() => delay(50))
-    ]).should.be["rejectedWith"](/tripped/);
+    ]).should.be.rejectedWith(/tripped/);
   });
 
   it("allows a probation request after time has passed", async () => {
     const breaker = new CircuitBreaker("test", { checkInterval: 50 });
     breaker.trip();
-    breaker.do(() => Promise.resolve(3.0)).should.be["rejectedWith"](/tripped/);
+    await breaker.do(() => Promise.resolve(3.0)).should.be.rejectedWith(/tripped/);
     await delay(50);
 
     breaker.check();
@@ -95,8 +95,9 @@ describe("CircuitBreaker", () => {
     const breaker = new CircuitBreaker("test", { checkInterval: 50 });
     breaker.trip();
     await delay(50);
-    breaker.do(() => {
+    await breaker.do(() => {
       throw new Error("oh noes");
-    }).should.be["rejectedWith"](/tripped/);
+    }).should.be.rejectedWith(/oh noes/);
+    await breaker.do(() => Promise.resolve(10)).should.be.rejectedWith(/tripped/);
   });
 });
