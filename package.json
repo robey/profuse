@@ -1,6 +1,6 @@
 {
   "name": "profuse",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "promise-based circuit breaker",
   "keywords": [
     "circuit-breaker"
