@@ -135,8 +135,11 @@ export class CircuitBreaker {
 
   // always returns a Promise.
   async do<T>(f: () => Promise<T>): Promise<T> {
-    if (!this.check()) return Promise.reject(new Error(`Circuit breaker tripped: ${this.name}`));
     this.addConcurrent();
+    if (!this.check()) {
+      this.finishedConcurrent();
+      throw new Error(`Circuit breaker tripped: ${this.name}`);
+    }
 
     try {
       const rv = await f();
