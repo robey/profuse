@@ -31,7 +31,7 @@
     "build": "tsc",
     "clean": "rm -rf lib",
     "distclean": "npm run clean && rm -rf node_modules npm-debug.log",
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "test": "npm run build && mocha -R spec --colors lib/test"
   }
 }
