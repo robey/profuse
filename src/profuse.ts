@@ -3,6 +3,8 @@ const DEFAULT_MAX_CONCURRENT_REQUESTS = Math.pow(10, 6);
 const DEFAULT_TRIP_RATE = 0.9;
 const DEFAULT_WINDOW = 100;
 
+type Callback<T> = (error?: Error, result?: T) => void;
+
 export enum Mode {
   Normal,
   Tripped,
@@ -43,7 +45,7 @@ export class CircuitBreaker {
   window = DEFAULT_WINDOW;
   tripRate = DEFAULT_TRIP_RATE;
 
-  logger: (message: string) => void;
+  logger?: (message: string) => void;
 
   constructor(public name: string, options: CircuitBreakerOptions = {}) {
     if (options.maxConcurrent !== undefined) this.maxConcurrent = options.maxConcurrent;
@@ -151,5 +153,27 @@ export class CircuitBreaker {
       this.finishedConcurrent();
       throw error;
     }
+  }
+
+  // callback version
+  doCallback<T>(f: (callback: Callback<T>) => void, callback: Callback<T>) {
+    this.addConcurrent();
+    if (!this.check()) {
+      this.finishedConcurrent();
+      callback(new Error(`Circuit breaker tripped: ${this.name}`));
+      return;
+    }
+
+    f((error, value) => {
+      if (error) {
+        this.addResult(-1);
+        this.finishedConcurrent();
+        callback(error);
+      } else {
+        this.addResult(1);
+        this.finishedConcurrent();
+        callback(undefined, value);
+      }
+    });
   }
 }
