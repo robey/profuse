@@ -111,17 +111,6 @@ export class CircuitBreaker {
     }
   }
 
-  private addConcurrent() {
-    this.concurrent++;
-    if (this.concurrent > this.maxConcurrent) {
-      this.trip();
-    }
-  }
-
-  private finishedConcurrent() {
-    this.concurrent--;
-  }
-
   // okay to try?
   check(): boolean {
     if (this.mode == Mode.Tripped) {
@@ -135,45 +124,47 @@ export class CircuitBreaker {
     return true;
   }
 
-  // always returns a Promise.
-  async do<T>(f: () => Promise<T>): Promise<T> {
-    this.addConcurrent();
+  // attempt to begin an operation. if the circuit breaker is active, it throws an exception immediately.
+  tryStart() {
+    this.concurrent++;
+    if (this.concurrent > this.maxConcurrent) this.trip();
     if (!this.check()) {
-      this.finishedConcurrent();
+      this.concurrent--;
       throw new Error(`Circuit breaker tripped: ${this.name}`);
     }
+  }
+
+  // register that an operation (started with `tryStart`) is complete, and tell us if it succeeded.
+  registerResult(success: boolean) {
+    this.concurrent--;
+    this.addResult(success ? 1 : -1);
+  }
+
+  // always returns a Promise.
+  async do<T>(f: () => Promise<T>): Promise<T> {
+    this.tryStart();
 
     try {
       const rv = await f();
-      this.addResult(1);
-      this.finishedConcurrent();
+      this.registerResult(true);
       return rv;
     } catch (error) {
-      this.addResult(-1);
-      this.finishedConcurrent();
+      this.registerResult(false);
       throw error;
     }
   }
 
   // callback version
   doCallback<T>(f: (callback: Callback<T>) => void, callback: Callback<T>) {
-    this.addConcurrent();
-    if (!this.check()) {
-      this.finishedConcurrent();
-      callback(new Error(`Circuit breaker tripped: ${this.name}`));
-      return;
+    try {
+      this.tryStart();
+    } catch (error) {
+      return callback(error);
     }
 
     f((error, value) => {
-      if (error) {
-        this.addResult(-1);
-        this.finishedConcurrent();
-        callback(error);
-      } else {
-        this.addResult(1);
-        this.finishedConcurrent();
-        callback(undefined, value);
-      }
+      this.registerResult(error === undefined);
+      callback(error, value);
     });
   }
 }

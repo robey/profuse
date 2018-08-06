@@ -17,6 +17,26 @@ breaker.do(() => {
 
 The options are documented in `profuse.ts`.
 
+There is also a callback version, if you aren't comfortable with promises yet, or are targeting older platforms. The syntax is a bit more confusing because of the inside-out nature of callbacks: It accepts a function that takes a callback, and _your_ callback.
+
+```es6
+const breaker = new CircuitBreaker("database", { tripRate: 0.95 });
+breaker.doCallback(cb => fs.open(path, flags, cb), (error, file) => {
+  // do things with file
+});
+```
+
+If you prefer, you can use the lower-level API:
+
+```es6
+const breaker = new CircuitBreaker("database", { tripRate: 0.95 });
+breaker.tryStart();  // throws an exception if the circuit breaker has tripped
+fs.open(path, flags, (error, file) => {
+  breaker.registerResult(error == null);
+  // do things with file
+});
+```
+
 ## Logic
 
 In normal mode, trip if:
